@@ -1,5 +1,5 @@
 import './styles.css';
-import menu from './data/menu.json';
+import menu from './menu.json';
 import createMenu from './templates/menuTemplate.hbs'
 
 const refs = {
