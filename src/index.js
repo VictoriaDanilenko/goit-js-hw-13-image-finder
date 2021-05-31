@@ -1,37 +1,55 @@
-import './styles.css';
-import menu from './menu.json';
-import createMenu from './templates/menuTemplate.hbs'
+import './styles.scss';
+import countryNamesTpl from './templates/countries.hbs';
+import countryNameTpl from './templates/country.hbs';
+import featchArticles from './js/fetchCountries';
 
-const refs = {
-    menuList: document.querySelector('.js-menu'),
-    switchInput: document.querySelector('.theme-switch__toggle'),
-    body: document.body,
-}
+import { info, error } from '@pnotify/core';
+import '@pnotify/core/dist/PNotify.css';
+import '@pnotify/core/dist/BrightTheme.css';
 
-const Theme = {
-  LIGHT: 'light-theme',
-  DARK: 'dark-theme',
-};
+const debounce = require('lodash.debounce');
+const input = document.querySelector('.countryName');
+const ul = document.querySelector('.js-infoCountries');
+const countryInfo = document.querySelector('.countryInfo');
 
-refs.body.classList.add(
-    localStorage.getItem('theme') === null
-        ? Theme.LIGHT
-        : localStorage.getItem('theme')
-);
-refs.switchInput.checked = localStorage.getItem('theme') === Theme.DARK;
+const enteringTextToSearch = debounce(() => {
+  featchArticles(input.value)
+    .then(resp => {
+      addList(resp);
+    })
+    .catch(errors => {
+      console.error(errors);
+      ul.innerHTML = '';
+      countryInfo.innerHTML = '';
+      error({
+        title: 'Warning!',
+        text: errors,
+        delay: 2000,
+        closerHover: true,
+      });
+    });
+}, 500);
 
-refs.menuList.insertAdjacentHTML('beforeend', createMenu(menu));
-refs.switchInput.addEventListener('click', handleChangeTheme);
+input.addEventListener('input', enteringTextToSearch);
 
-function toggleTheme(add, rem) {
-    refs.body.classList.replace(rem, add);
-    localStorage.setItem('theme', add);
-}
-
-function handleChangeTheme(e) {
-    if (e.target.checked) {
-        toggleTheme(Theme.DARK, Theme.LIGHT);
-        return
-    } 
-    toggleTheme(Theme.LIGHT, Theme.DARK);
+function addList(arr) {
+  console.log(arr);
+  if (arr.length >= 10) {
+    error({
+      title: 'Warning!',
+      text: 'Too many matches found. Please enter a more specific query!',
+      delay: 2000,
+      closerHover: true,
+    });
+    ul.innerHTML = '';
+    countryInfo.innerHTML = '';
+    return;
+  }
+  if (arr.length === 1) {
+    ul.innerHTML = '';
+    countryInfo.innerHTML = countryNameTpl(...arr);
+  } else {
+    countryInfo.innerHTML = '';
+    ul.innerHTML = countryNamesTpl(arr);
+  }
 }
