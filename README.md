@@ -1,2 +1,2 @@
-# goit-js-hw-10-food-service
-JS_Homework-10
+# goit-js-hw-12-countries
+JS_Homework-12
