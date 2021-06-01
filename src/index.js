@@ -1,55 +1,59 @@
-import './styles.scss';
-import countryNamesTpl from './templates/countries.hbs';
-import countryNameTpl from './templates/country.hbs';
-import featchArticles from './js/fetchCountries';
+import { refs } from './js/refs';
+import apiService from './js/apiService';
+import { createMarkup } from './js/create-markup';
+import LoadMoreBtn from './components/button';
+import './styles.css';
 
-import { info, error } from '@pnotify/core';
-import '@pnotify/core/dist/PNotify.css';
-import '@pnotify/core/dist/BrightTheme.css';
+const loadMoreBtn = new LoadMoreBtn({
+  selector: 'button[data-action="load-more"]',
+  hidden: true,
+});
 
-const debounce = require('lodash.debounce');
-const input = document.querySelector('.countryName');
-const ul = document.querySelector('.js-infoCountries');
-const countryInfo = document.querySelector('.countryInfo');
+refs.searchForm.addEventListener('submit', onSubmit);
+loadMoreBtn.refs.button.addEventListener('click', fetchMoreImages);
 
-const enteringTextToSearch = debounce(() => {
-  featchArticles(input.value)
-    .then(resp => {
-      addList(resp);
-    })
-    .catch(errors => {
-      console.error(errors);
-      ul.innerHTML = '';
-      countryInfo.innerHTML = '';
-      error({
-        title: 'Warning!',
-        text: errors,
-        delay: 2000,
-        closerHover: true,
-      });
-    });
-}, 500);
+function onSubmit(event) {
+  event.preventDefault();
 
-input.addEventListener('input', enteringTextToSearch);
+  const form = event.currentTarget;
+  apiService.searchQuery = form.elements.query.value;
 
-function addList(arr) {
-  console.log(arr);
-  if (arr.length >= 10) {
-    error({
-      title: 'Warning!',
-      text: 'Too many matches found. Please enter a more specific query!',
-      delay: 2000,
-      closerHover: true,
-    });
-    ul.innerHTML = '';
-    countryInfo.innerHTML = '';
-    return;
-  }
-  if (arr.length === 1) {
-    ul.innerHTML = '';
-    countryInfo.innerHTML = countryNameTpl(...arr);
-  } else {
-    countryInfo.innerHTML = '';
-    ul.innerHTML = countryNamesTpl(arr);
-  }
+  clearGallery();
+  apiService.resetPage();
+  fetchMoreImages(event);
+  form.reset();
+}
+
+function fetchMoreImages(event) {
+  loadMoreBtn.disable();
+
+  apiService.fetchImages().then(images => {
+    if (images.length === 0) {
+      refs.gallery.innerHTML =
+        '<h1 class="error"><span class="smille">😔 </span>No results were found for your search</h1>';
+      loadMoreBtn.hide();
+      return;
+    }
+    createMarkup(images);
+    loadMoreBtn.show();
+    loadMoreBtn.enable();
+
+    if (
+      event.target === loadMoreBtn.refs.button ||
+      event.target === loadMoreBtn.refs.label
+    ) {
+      scrollBy();
+    }
+  });
+}
+
+function clearGallery() {
+  refs.gallery.innerHTML = '';
+}
+
+function scrollBy() {
+  window.scrollBy({
+    top: document.documentElement.clientHeight,
+    behavior: 'smooth',
+  });
 }
