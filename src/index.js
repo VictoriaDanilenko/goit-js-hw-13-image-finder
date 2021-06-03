@@ -1,7 +1,7 @@
 import { refs } from './js/refs';
 import apiService from './js/apiService';
 import { createMarkup } from './js/create-markup';
-import LoadMoreBtn from './components/button';
+import LoadMoreBtn from './js/button';
 import './styles.css';
 
 const loadMoreBtn = new LoadMoreBtn({
@@ -38,12 +38,7 @@ function fetchMoreImages(event) {
     loadMoreBtn.show();
     loadMoreBtn.enable();
 
-    if (
-      event.target === loadMoreBtn.refs.button ||
-      event.target === loadMoreBtn.refs.label
-    ) {
-      scrollBy();
-    }
+    scrollBy();
   });
 }
 
@@ -52,8 +47,8 @@ function clearGallery() {
 }
 
 function scrollBy() {
-  window.scrollBy({
-    top: document.documentElement.clientHeight,
+  loadMoreBtn.refs.button.scrollIntoView({
+    block: 'start',
     behavior: 'smooth',
   });
 }
